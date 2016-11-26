@@ -1,12 +1,9 @@
 import default
 import kernel
 
-def J(alpha, A, omega_index, omega_index_prime, omega_n, omega, C_real, C_imag):
+def J(alpha, A, omega_index, omega_index_prime, omega_n, omega, C_real_inv, C_imag_inv):
     import numpy as np
     import numpy.linalg
-
-    C_real_inv = numpy.linalg.inv(C_real)
-    C_imag_inv = numpy.linalg.inv(C_imag)
 
     result = 0.0
     if (omega_index == omega_index_prime):

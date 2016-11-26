@@ -1,14 +1,11 @@
 import default
 import kernel
 
-def f(alpha, G, A, omega_index, omega_n, omega, C_real, C_imag):
+def f(alpha, G, A, omega_index, omega_n, omega, C_real_inv, C_imag_inv):
     import numpy as np
     import numpy.linalg 
 
-    result = -alpha*(1 + np.log(A[omega_index]/default.D(omega[omega_index])))
-
-    C_real_inv = numpy.linalg.inv(C_real)
-    C_imag_inv = numpy.linalg.inv(C_imag)
+    result = -alpha*(1 + np.log((A[omega_index])/default.D(omega[omega_index])))
     
     Niom = len(omega_n)
 

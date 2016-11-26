@@ -1,6 +1,6 @@
 import kernel
 
-def chi(G, A, omega_n, omega, C_real, C_imag):
+def chi(G, A, omega_n, omega, C_real_inv, C_imag_inv):
     import numpy as np
     import numpy.linalg
 
@@ -11,9 +11,6 @@ def chi(G, A, omega_n, omega, C_real, C_imag):
     for i in range(Niom):
         G_real[i] = G[i].real
         G_imag[i] = G[i].imag
-
-    C_real_inv = numpy.linalg.inv(C_real)
-    C_imag_inv = numpy.linalg.inv(C_imag)
 
     result = 0.0
     vector_left = np.zeros(Niom)

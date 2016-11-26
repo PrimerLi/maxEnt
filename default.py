@@ -56,14 +56,22 @@ def main():
         G_real.append(temp.real)
         G_imag.append(temp.imag)
 
-    randomNumbers = np.random.normal(0, 0.001, Niom)
+    randomNumbers = np.random.normal(0, 0.0001, Niom)
     for nw in range(len(G_real)):
         G_real[nw] = G_real[nw] + randomNumbers[nw]
-    randomNumbers = np.random.normal(0, 0.0015, Niom)
+    randomNumbers = np.random.normal(0, 0.00015, Niom)
     for nw in range(len(G_imag)):
         G_imag[nw] = G_imag[nw] + randomNumbers[nw]
     printFile.printFile(omega_n, G_real, "G_real.txt")
     printFile.printFile(omega_n, G_imag, "G_imag.txt")
+    ofile = open("G.txt", "w")
+    for i in range(len(omega_n)):
+        ofile.write(str(omega_n[i]) + "    " + str(G_real[i]) + "    " + str(G_imag[i]) + "\n")
+    ofile.close()
+    ofile = open("G_error.txt", "w")
+    for i in range(len(omega_n)):
+        ofile.write(str(omega_n[i]) + "    " + str(0.0001) + "   " + str(0.00015) + "\n")
+    ofile.close()
 
     omega = []
     spectral = []
@@ -78,4 +86,6 @@ def main():
     printFile.printFile(omega, spectral, "spectral.txt")
     return 0
 
-main()
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

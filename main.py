@@ -4,7 +4,7 @@ import f
 import J
 import chi
 
-def readFiles():
+def readFiles(Greal, Gimag):
     import os
     import sys
     import numpy as np
@@ -16,9 +16,9 @@ def readFiles():
     G_imag = []
 
     try:
-        ifile = open("G_real.txt", "r")
+        ifile = open(Greal, "r")
     except:
-        sys.exit("G_real.txt does not exist. ")
+        sys.exit(Greal + " does not exist. ")
     for index, string in enumerate(ifile):
         a = string.split()
         omega_n.append(float(a[0]))
@@ -26,9 +26,9 @@ def readFiles():
     ifile.close()
 
     try:
-        ifile = open("G_imag.txt", "r")
+        ifile = open(Gimag, "r")
     except:
-        sys.exit("G_imag.txt does not exist. ")
+        sys.exit(Gimag + " does not exist. ")
     for index, string in enumerate(ifile):
         a = string.split()
         G_imag.append(float(a[1]))
@@ -46,7 +46,7 @@ def diff(a, b):
         s = s + (a[i] - b[i])**2
     return np.sqrt(s)
 
-def newton(alpha, G, omega_n, omega, A_initial, C_real, C_imag):
+def newton(alpha, G, omega_n, omega, A_initial, C_real_inv, C_imag_inv):
     import numpy as np
     import numpy.linalg
 
@@ -58,16 +58,16 @@ def newton(alpha, G, omega_n, omega, A_initial, C_real, C_imag):
     iterationMax = 30
     counter = 0
 
-    eps = 0.001
+    eps = 0.008
     while(True):
         counter = counter + 1 
         if (counter > iterationMax):
             break
         for i in range(Nomega):
             for j in range(Nomega):
-                Jacobian[i, j] = J.J(alpha, A_initial, i, j, omega_n, omega, C_real, C_imag)
+                Jacobian[i, j] = J.J(alpha, A_initial, i, j, omega_n, omega, C_real_inv, C_imag_inv)
         for i in range(Nomega):
-            function[i] = f.f(alpha, G, A_initial, i, omega_n, omega, C_real, C_imag)
+            function[i] = f.f(alpha, G, A_initial, i, omega_n, omega, C_real_inv, C_imag_inv)
         A_updated[:] = A_initial[:] - numpy.linalg.inv(Jacobian).dot(function)[:]
         error = diff(A_initial, A_updated)
         if (error < eps):
@@ -89,7 +89,9 @@ def main():
     import numpy as np
     import numpy.linalg
 
-    omega_n, G = readFiles()
+    Greal = "G_cc_real.txt"
+    Gimag = "G_cc_imag.txt"
+    omega_n, G = readFiles(Greal, Gimag)
     Niom = len(omega_n)
 
     N = 40
@@ -101,33 +103,64 @@ def main():
         omega[i] = omega_lower + i*domega
     Nomega = len(omega)
     A_initial = np.zeros(Nomega)
-    for i in range(len(A_initial)):
-        A_initial[i] = default.D(omega[i])
-    
-    printFile(omega, A_initial, "A_initial.txt")
+    if (not os.path.exists("A_initial.txt")):
+        for i in range(len(A_initial)):
+            A_initial[i] = default.D(omega[i])
+        printFile(omega, A_initial, "A_initial.txt")
+    else:
+        omega = []
+        A_initial = []
+        ifile = open("A_initial.txt", "r")
+        for index, string in enumerate(ifile):
+            a = string.split()
+            omega.append(float(a[0]))
+            A_initial.append(float(a[1]))
+        ifile.close()
+        Nomega = len(omega)
 
     C_real = np.zeros((Niom, Niom))
     C_imag = np.zeros((Niom, Niom))
+
+    ifile = open("CM_cc_real.txt", "r")
+    for (index, string) in enumerate(ifile):
+        a = string.split()
+        rowIndex = int(a[0])-1
+        colIndex = int(a[1])-1
+        if (True):
+            C_real[rowIndex, colIndex] = float(a[2])
+    ifile.close()
+    ifile = open("CM_cc_imag.txt", "r")
+    for (index, string) in enumerate(ifile):
+        a = string.split()
+        rowIndex = int(a[0])-1
+        colIndex = int(a[1])-1
+        if (True):
+            C_imag[rowIndex, colIndex] = float(a[2])
+    ifile.close()
     for i in range(Niom):
-        C_real[i, i] = 0.001**2
-        C_imag[i, i] = 0.0015**2
+        C_real[i, i] = 0.0075**2
+        C_imag[i, i] = 0.0075**2
+    C_real_inv = numpy.linalg.inv(C_real)
+    C_imag_inv = numpy.linalg.inv(C_imag)
 
     if (True):
         alpha = []
         chi_values = []
-        for i in range(8):
-            alpha.append(1.0e1*(i+2))
+        for i in range(10):
+            alpha.append(600 - i*20)
         for i in range(len(alpha)):
             print "alpha = ", alpha[i]
-            A_updated = newton(alpha[i], G, omega_n, omega, A_initial, C_real, C_imag)
-            chi_values.append(chi.chi(G, A_updated, omega_n, omega, C_real, C_imag))
+            A_updated = newton(alpha[i], G, omega_n, omega, A_initial, C_real_inv, C_imag_inv)
+            chi_values.append(chi.chi(G, A_updated, omega_n, omega, C_real_inv, C_imag_inv))
             printFile(omega, A_updated, "A_updated_alpha_" + str(alpha[i]) + ".txt")
+            os.system("cp A_updated_alpha_" + str(alpha[i]) + ".txt A_initial.txt")
         printFile(alpha, chi_values, "chi_alpha.txt")
     if (False):
-        alpha = 1.5e4
-        A_updated = newton(alpha, G, omega_n, omega, A_initial, C_real, C_imag)
+        alpha = 0.01
+        print "alpha = ", alpha
+        A_updated = newton(alpha, G, omega_n, omega, A_initial, C_real_inv, C_imag_inv)
         printFile(omega, A_updated, "A_updated_alpha_" + str(alpha) + ".txt")
-        print chi.chi(G, A_updated, omega_n, omega, C_real, C_imag)
+        print chi.chi(G, A_updated, omega_n, omega, C_real_inv, C_imag_inv)
     return 0
 
 main()
