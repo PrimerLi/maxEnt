@@ -55,10 +55,10 @@ def newton(alpha, G, omega_n, omega, A_initial, C_real_inv, C_imag_inv):
     Jacobian = np.zeros((Nomega, Nomega))
     function = np.zeros(Nomega)
     A_updated = np.zeros(Nomega)
-    iterationMax = 30
+    iterationMax = 100
     counter = 0
 
-    eps = 0.008
+    eps = 0.0001
     while(True):
         counter = counter + 1 
         if (counter > iterationMax):
@@ -138,8 +138,8 @@ def main():
             C_imag[rowIndex, colIndex] = float(a[2])
     ifile.close()
     for i in range(Niom):
-        C_real[i, i] = 0.0075**2
-        C_imag[i, i] = 0.0075**2
+        C_real[i, i] = 0.001**2
+        C_imag[i, i] = 0.001**2
     C_real_inv = numpy.linalg.inv(C_real)
     C_imag_inv = numpy.linalg.inv(C_imag)
 
@@ -147,7 +147,7 @@ def main():
         alpha = []
         chi_values = []
         for i in range(10):
-            alpha.append(600 - i*20)
+            alpha.append(100*np.exp(-i*0.5))
         for i in range(len(alpha)):
             print "alpha = ", alpha[i]
             A_updated = newton(alpha[i], G, omega_n, omega, A_initial, C_real_inv, C_imag_inv)
@@ -155,11 +155,12 @@ def main():
             printFile(omega, A_updated, "A_updated_alpha_" + str(alpha[i]) + ".txt")
             os.system("cp A_updated_alpha_" + str(alpha[i]) + ".txt A_initial.txt")
         printFile(alpha, chi_values, "chi_alpha.txt")
-    if (False):
+    else:
         alpha = 0.01
         print "alpha = ", alpha
         A_updated = newton(alpha, G, omega_n, omega, A_initial, C_real_inv, C_imag_inv)
         printFile(omega, A_updated, "A_updated_alpha_" + str(alpha) + ".txt")
+        os.system("cp A_updated_alpha_" + str(alpha) + ".txt" + "A_initial.txt")
         print chi.chi(G, A_updated, omega_n, omega, C_real_inv, C_imag_inv)
     return 0
 
