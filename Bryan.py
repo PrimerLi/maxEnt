@@ -139,8 +139,8 @@ def main():
             C_imag[rowIndex, colIndex] = float(a[2])
     ifile.close()
     for i in range(Niom):
-        C_real[i, i] = 0.004**2
-        C_imag[i, i] = 0.004**2
+        C_real[i, i] = 0.01**2
+        C_imag[i, i] = 0.01**2
     C_real_inv = numpy.linalg.inv(C_real)
     C_imag_inv = numpy.linalg.inv(C_imag)
 
@@ -148,20 +148,35 @@ def main():
         alpha = []
         probability = []
         chi_values = []
-        for i in range(20):
-            alpha.append(500*np.exp(-i*0.5))
+        for i in range(1):
+            alpha.append(0.001*np.exp(-i*0.5))
+        ofile = open("alpha.txt", "a")
+        for i in range(len(alpha)):
+            ofile.write(str(alpha[i]) + "\n")
+        ofile.close()
+        spectrals = []
         for i in range(len(alpha)):
             print "alpha = ", alpha[i]
             A_updated = newton(alpha[i], G, omega_n, omega, A_initial, C_real_inv, C_imag_inv)
+            spectrals.append(A_updated)
             chi_values.append(chi.chi(G, A_updated, omega_n, omega, C_real_inv, C_imag_inv))
             probability.append(numpy.exp(alpha[i]*entropy.entropy(omega, A_updated) - 0.5*chi.chi(G, A_updated, omega_n, omega, C_real_inv, C_imag_inv)))
             printFile(omega, A_updated, "A_updated_alpha_" + str(alpha[i]) + ".txt")
             os.system("cp A_updated_alpha_" + str(alpha[i]) + ".txt A_initial.txt")
-        printFile(alpha, chi_values, "chi_alpha.txt")
+        
         printFile(alpha, probability, "P_alpha.txt")
-        ofile = open("P_log_alpha.txt", "w")
+        ofile = open("P_log_alpha.txt", "a")
         for i in range(len(alpha)):
             ofile.write(str(np.log(alpha[i])) + "    " + str(probability[i]) + "\n")
+        ofile.close()
+
+        spectral_accumulant = np.zeros(len(spectrals[0]))
+        for i in range(1,len(spectrals)):
+            for j in range(len(spectral_accumulant)):
+                spectral_accumulant[j] = spectral_accumulant[j] + (spectrals[i]*(alpha[i] - alpha[i-1])*probability[i])[j]
+        ofile = open("bryan.txt", "w")
+        for i in range(len(omega)):
+            ofile.write(str(omega[i]) + "    " + str(spectral_accumulant[i]) + "\n")
         ofile.close()
     else:
         alpha = 0.01
